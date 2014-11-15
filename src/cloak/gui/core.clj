@@ -1,8 +1,16 @@
 (ns cloak.gui.core
   (:require [cloak.symbols :refer :all]
+            [cloak.gui.grid :refer :all]
             [clojure.string :as str]))
 
 (use 'clojure.pprint)
+
+;;
+;; Not sure about these yet.
+;;
+(defrecord Dimension [width height])
+(defrecord Point [x y])
+
 
 (defn box-line
   [len left middle right]
@@ -31,7 +39,7 @@
 
 (defn create-box
   [w h]
-  (let [box (vec (repeat h (vec (repeat w \.))))]
+  (let [box (create-grid w h \.)]
     (-> box
         (assoc 0 (box-top (- w 2)))
         (fill-body w (dec h) 1)
