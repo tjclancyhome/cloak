@@ -1,0 +1,2 @@
+cmdhistory=["(-main)" "(t/stop term)" "(-main)" "(s/start scr)" "(s/stop scr)" "(-main)" "(update-in {} [\:dir] \\"hello\\")" "(update-in {} [\:dir] \\"hello\\".toUpperCase)" "(update-in {} [\:dir] (str \\"hello\\"))" "(assoc-in {} [\:dir] \\"up\\")" "(update-in {} [\:dir] str \\"hello\\")" "(-main)"]
+eclipse.preferences.version=1
