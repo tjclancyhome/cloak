@@ -53,7 +53,7 @@
   game board grid."
 
   [width height]
-  (let [game-grid (create-grid [width height] \.)
+  (let [game-grid (create-grid width height \.)
         game-grid-center (grid-center game-grid)
         room (add-random-door (create-room 32 10))
         room-width  (grid-width room)

@@ -1,30 +1,37 @@
 (ns cloak.core
   (:require [cloak.symbols :refer :all]
+            [cloak.util.grid :refer :all]
+            [cloak.gui.core :refer :all]
+            [cloak.dungeon :refer [generate-dungeon open-space?]]
             [clojure.string :refer [join]]
             [lanterna.screen :as s]
             [taoensso.timbre :as timbre
-             :refer (log  trace  debug  info  warn  error  fatal  report
-                   logf tracef debugf infof warnf errorf fatalf reportf
-                   spy logged-future with-log-level with-logging-config
-                   sometimes)])
+             :refer (log  trace  debug  info  warn  error  fatal)])
   (:gen-class))
 
-(use 'clojure.pprint)
+
+(timbre/set-level! :info)
+
+(set! *warn-on-reflection* true)
 
 (defn world [game]
   (:world game))
 
+(defn draw-room
+  [room screen]
+  (let [box (nth room 2)
+        y (nth room 1)
+        x (nth room 0)
+        rows (count box)]
+    (dotimes [i rows]
+      (s/put-string screen x (+ i y) (get-as-str box i)))))
+
 (defn draw-world
-  "This is very bad. I create a string called row by simply
-   repeating and joining a string with the value of a period."
   [game screen]
-  (let [[w h] (s/get-size screen)
-        row (join "" (take w (repeat ".")))]
-    (loop [i 0]
-      (if-not (= i h)
-        (do
-          (s/put-string screen 0 i row)
-          (recur (inc i)))))))
+  (let [grid (-> game :world :grid)
+        rows (count grid)]
+    (dotimes[i rows]
+      (s/put-string screen 0 i (apply str (nth grid i))))))
 
 (defn get-input [game screen]
   (assoc game :input (s/get-key-blocking screen)))
@@ -37,12 +44,21 @@
   (assoc-in game [:player :location] [x y]))
 
 (defn move-player [game dir]
-  (let [[x y] (-> game :player :location)]
+  (let [[x y] (-> game :player :location)
+        grid  (-> game :world :grid)]
     (case dir
-      :up    (update-location game x (dec y))
-      :down  (update-location game x (inc y))
-      :left  (update-location game (dec x) y)
-      :right (update-location game (inc x) y))))
+      :up    (if (open-space? grid x (dec y))
+               (update-location game x (dec y))
+               (update-location game x y))
+      :down  (if (open-space? grid x (inc y))
+               (update-location game x (inc y))
+               (update-location game x y))
+      :left  (if (open-space? grid (dec x) y)
+               (update-location game (dec x) y)
+               (update-location game x y))
+      :right (if (open-space? grid (inc x) y)
+               (update-location game (inc x) y)
+               (update-location game x y)))))
 
 (defn process-input [game]
   (let [input (:input game)]
@@ -59,31 +75,27 @@
   (let [[x y] location]
     (trace "x:" x "y:" y)
     (s/put-string screen x y (str icon))
-    (trace "attempted to put icon onto the screen")))
+    (s/move-cursor screen x y)))
 
 (defn- player-location [game]
   (-> game :player :location))
 
-(defn- player-icon [game]
-  (-> game :player :player-icon))
+(defn- player-avatar [game]
+  (-> game :player :avatar))
 
 (defn update-gui [game screen]
   (trace "update-gui:" game)
-  ;(s/clear screen)
   (draw-world game screen)
   (let [location (player-location game)
-        icon     (player-icon game)]
+        icon     (player-avatar game)]
     (trace "location:" location "icon:" icon)
     (draw-player location icon screen)
-    (s/redraw screen)
-    ;; this has to happen after the screen is redrawn.
-    (s/hide-cursor screen))
+    (s/redraw screen))
   game)
 
 (defn initialize-screen [screen]
   (s/start screen)
-  (s/redraw screen)
-  (s/hide-cursor screen))
+  (s/redraw screen))
 
 (defn game-ended? [game]
   (get-in game [:end-game]))
@@ -99,13 +111,17 @@
 
 (defn -main
   [& args]
-  (let [screen (s/get-screen :swing {:cols 100 :rows 40})]
+  (let [screen (s/get-screen :swing {:cols 120 :rows 50})]
     (initialize-screen screen)
-    (let [[x y] (center-of screen)
-          game {:world {:size (s/get-size screen)}
+    (let [size (s/get-size screen)
+          game {:world {:size size
+                        :grid (generate-dungeon 120 50)}
                 :input nil
-                :player {:location [x y]
-                         :player-icon \@}}]
-      (run game screen))
-    (s/stop screen)))
+                :player {:location (center-of screen)
+                         :avatar \@
+                         :level 1
+                         :hp 10}}]
+      (s/in-screen screen
+        (run game screen)))))
 
+(-main)

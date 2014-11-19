@@ -1,15 +1,18 @@
 (ns cloak.core
   (:require [cloak.symbols :refer :all]
-            [cloak.gui.grid :refer :all]
+            [cloak.util.grid :refer :all]
             [cloak.gui.core :refer :all]
-            [cloak.dungeon :refer [generate-dungeon space-not-blocked?]]
+            [cloak.dungeon :refer [generate-dungeon open-space?]]
             [clojure.string :refer [join]]
             [lanterna.screen :as s]
             [taoensso.timbre :as timbre
              :refer (log  trace  debug  info  warn  error  fatal)])
   (:gen-class))
 
-(timbre/set-level! :debug)
+
+(timbre/set-level! :info)
+
+(set! *warn-on-reflection* true)
 
 (defn world [game]
   (:world game))
@@ -30,12 +33,6 @@
     (dotimes[i rows]
       (s/put-string screen 0 i (apply str (nth grid i))))))
 
-;    (let [rooms (-> game :world :rooms)
-;          n (count rooms)]
-;      (debug (str "rooms: " n))
-;      (dotimes [i n]
-;        (draw-room (nth rooms i) screen)))))
-
 (defn get-input [game screen]
   (assoc game :input (s/get-key-blocking screen)))
 
@@ -46,31 +43,33 @@
 (defn update-location [game x y]
   (assoc-in game [:player :location] [x y]))
 
-(defn move-player [game dir]
+(defn move-player
+  "todo: definitely refactor this mess."
+  [game dir]
   (let [[x y] (-> game :player :location)
         grid  (-> game :world :grid)]
     (case dir
-      :up    (if (space-not-blocked? grid x (dec y))
-               (update-location game x (dec y))
-               (update-location game x y))
-      :down  (if (space-not-blocked? grid x (inc y))
-               (update-location game x (inc y))
-               (update-location game x y))
-      :left  (if (space-not-blocked? grid (dec x) y)
-               (update-location game (dec x) y)
-               (update-location game x y))
-      :right (if (space-not-blocked? grid (inc x) y)
-               (update-location game (inc x) y)
-               (update-location game x y)))))
+      (\8 \k :up)    (if (open-space? grid x (dec y))
+                       (update-location game x (dec y))
+                       (update-location game x y))
+      (\2 \j :down)  (if (open-space? grid x (inc y))
+                       (update-location game x (inc y))
+                       (update-location game x y))
+      (\4 \h :left)  (if (open-space? grid (dec x) y)
+                       (update-location game (dec x) y)
+                       (update-location game x y))
+      (\6 \l :right) (if (open-space? grid (inc x) y)
+                       (update-location game (inc x) y)
+                       (update-location game x y)))))
 
 (defn process-input [game]
   (let [input (:input game)]
     (dissoc game :input)
     (case input
-      :up     (move-player game :up)
-      :down   (move-player game :down)
-      :left   (move-player game :left)
-      :right  (move-player game :right)
+      (\8 \k :up)     (move-player game :up)
+      (\2 \j :down)   (move-player game :down)
+      (\4 \h :left)   (move-player game :left)
+      (\6 \l :right)  (move-player game :right)
       \q      (assoc-in game [:end-game] true)
       game)))
 
@@ -118,8 +117,7 @@
     (initialize-screen screen)
     (let [size (s/get-size screen)
           game {:world {:size size
-                        :grid (generate-dungeon 120 50)
-                        :rooms [[5 5 (create-box 32 10)]]}
+                        :grid (generate-dungeon 120 50)}
                 :input nil
                 :player {:location (center-of screen)
                          :avatar \@
@@ -128,4 +126,4 @@
       (s/in-screen screen
         (run game screen)))))
 
-;(-main)
+(-main)
