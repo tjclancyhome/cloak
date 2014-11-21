@@ -21,7 +21,7 @@
 (defn grid-dimensions
   "Return as [width height]."
   [grid]
-  [(count (first grid)) (count grid)])
+  [(grid-width grid) (grid-height grid)])
 
 (defn grid-cell
   [grid x y]
@@ -39,8 +39,7 @@
 
 (defn grid-center
   [grid]
-  (let [w (count (first grid))
-        h (count grid)]
+  (let [[w h] (grid-dimensions grid)]
     [(/ w 2) (/ h 2)]))
 
 (defn set-grid-cell
@@ -55,15 +54,17 @@
 (defn set-grid-column
   [grid column coll]
   (if (= (count coll) (grid-height grid))
-    (loop [i 0
-           n (count coll)
-           grid grid]
-      (if (< i n)
-        (recur (inc i)
-               n
-               (-> grid
-                 (set-grid-cell column i (get coll i))))
-        grid))))
+    (let [n (count coll)]
+      (loop [i 0
+             grid grid]
+        (if (< i n)
+          (recur (inc i) (set-grid-cell grid column i (get coll i)))
+          grid)))))
+
+(defn grid->str-vec
+  [grid]
+  (vec (for [row grid]
+         (apply str row))))
 
 (defn grid-print
   [grid]
@@ -73,7 +74,7 @@
 ;;
 ;; some example code
 ;;
-(comment
+;(comment
 (def grid (create-grid [5 5] \.))
 (def coll [\a \b \c \d \e])
 (grid-print (set-grid-row grid 1 coll))
@@ -81,4 +82,6 @@
 (grid-print (set-grid-column grid 1 coll))
 (println)
 (println (grid? grid))
-)
+(println)
+(println (time (grid->str-vec grid)))
+;)

@@ -2,36 +2,24 @@
   (:require [cloak.symbols :refer :all]
             [cloak.util.grid :refer :all]
             [cloak.gui.core :refer :all]
-            [cloak.dungeon :refer [generate-dungeon open-space?]]
+            [cloak.dungeon :refer [generate-dungeon can-move?]]
             [clojure.string :refer [join]]
             [lanterna.screen :as s]
             [taoensso.timbre :as timbre
              :refer (log  trace  debug  info  warn  error  fatal)])
   (:gen-class))
 
-
 (timbre/set-level! :info)
 
 (set! *warn-on-reflection* true)
 
-(defn world [game]
-  (:world game))
-
-(defn draw-room
-  [room screen]
-  (let [box (nth room 2)
-        y (nth room 1)
-        x (nth room 0)
-        rows (count box)]
-    (dotimes [i rows]
-      (s/put-string screen x (+ i y) (get-as-str box i)))))
-
 (defn draw-world
   [game screen]
   (let [grid (-> game :world :grid)
-        rows (count grid)]
-    (dotimes[i rows]
-      (s/put-string screen 0 i (apply str (nth grid i))))))
+        vs (grid->str-vec grid)
+        nrows (count grid)]
+    (dotimes[i nrows]
+      (s/put-string screen 0 i (get vs i)))))
 
 (defn get-input [game screen]
   (assoc game :input (s/get-key-blocking screen)))
@@ -43,20 +31,22 @@
 (defn update-location [game x y]
   (assoc-in game [:player :location] [x y]))
 
-(defn move-player [game dir]
+(defn move-player
+  "todo: definitely refactor this mess."
+  [game dir]
   (let [[x y] (-> game :player :location)
         grid  (-> game :world :grid)]
     (case dir
-      :up    (if (open-space? grid x (dec y))
+      :up    (if (can-move? grid x (dec y))
                (update-location game x (dec y))
                (update-location game x y))
-      :down  (if (open-space? grid x (inc y))
+      :down  (if (can-move? grid x (inc y))
                (update-location game x (inc y))
                (update-location game x y))
-      :left  (if (open-space? grid (dec x) y)
+      :left  (if (can-move? grid (dec x) y)
                (update-location game (dec x) y)
                (update-location game x y))
-      :right (if (open-space? grid (inc x) y)
+      :right (if (can-move? grid (inc x) y)
                (update-location game (inc x) y)
                (update-location game x y)))))
 
@@ -64,10 +54,10 @@
   (let [input (:input game)]
     (dissoc game :input)
     (case input
-      :up     (move-player game :up)
-      :down   (move-player game :down)
-      :left   (move-player game :left)
-      :right  (move-player game :right)
+      (\8 \k :up)     (move-player game :up)
+      (\2 \j :down)   (move-player game :down)
+      (\4 \h :left)   (move-player game :left)
+      (\6 \l :right)  (move-player game :right)
       \q      (assoc-in game [:end-game] true)
       game)))
 

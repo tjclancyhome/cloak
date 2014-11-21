@@ -6,9 +6,11 @@
 
 (set! *warn-on-reflection* true)
 
-(defn open-space?
+(def empty-space \.)
+
+(defn can-move?
   [grid x y]
-  (= (grid-cell grid x y) \.))
+  (= (grid-cell grid x y) empty-space))
 
 (defn update-grid-row
   [grid x y v]
@@ -54,12 +56,12 @@
 
   [width height]
   (let [game-grid (create-grid [width height] \.)
-        game-grid-center (grid-center game-grid)
+        [game-width game-height] (grid-center game-grid)
         room (add-random-door (create-room 32 10))
         room-width  (grid-width room)
         room-height (grid-height room)
-        room-loc-x (- (first game-grid-center) (/ room-width 2))
-        room-loc-y (- (second game-grid-center) (/ room-height 2))]
+        room-loc-x (- game-width  (/ room-width 2))
+        room-loc-y (- game-height (/ room-height 2))]
     (loop [i 0
            n (grid-height room)
            game-grid game-grid]
