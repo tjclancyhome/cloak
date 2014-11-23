@@ -5,7 +5,7 @@
 
 (use 'clojure.pprint)
 
-(set! *warn-on-reflection* true)
+(set! *warn-on-reflection* false)
 
 ;;
 ;; Not sure about these yet.
@@ -13,6 +13,27 @@
 (defrecord Dimension [width height])
 (defrecord Point [x y])
 
+;;
+;; Note: The GameTiles idea won't work with boxes that
+;; contain different characters to construct it (see
+;; the frame definitions below).
+;;
+(defrecord GameTile [kind fgcolor bgcolor symb])
+(def game-tiles
+  {:floor        (GameTile. :floor :white :black \.)
+   :stairs-up    (GameTile. :stairs-up :yellow :black \<)
+   :stairs-down  (GameTile. :stairs-down :yellow :black \>)
+   :wall         (GameTile. :wall :gray :black \#)}) ;
+
+(defn make-tile
+  ([kind fgcolor symb]
+   (make-tile kind fgcolor :black symb))
+  ([kind fgcolor bgcolor symb]
+   (GameTile. kind fgcolor bgcolor symb)))
+
+(defn tile->vec
+  [tile]
+  (vector (:symb tile) {:fg (:fgcolor tile) :bg (:bgcolor tile)}))
 
 (def double-line-frame
   {:veritcal-edge double-line-vertical
@@ -29,6 +50,30 @@
    :top-right single-line-top-right-corner
    :bottom-left single-line-bottom-left-corner
    :bottom-right single-line-bottom-right-corner})
+
+(def block-middle-frame
+  {:veritcal-edge block-middle
+   :horizontal-edge block-middle
+   :top-left block-middle
+   :top-right block-middle
+   :bottom-left block-middle
+   :bottom-right block-middle})
+
+(def block-dense-frame
+  {:veritcal-edge block-dense
+   :horizontal-edge block-dense
+   :top-left block-dense
+   :top-right block-dense
+   :bottom-left block-dense
+   :bottom-right block-dense})
+
+(def hash-frame
+  {:veritcal-edge \#
+   :horizontal-edge \#
+   :top-left \#
+   :top-right \#
+   :bottom-left \#
+   :bottom-right \#})
 
 (defn box-line
   [len left middle right]
@@ -63,7 +108,7 @@
 
 (defn create-box
   ([w h]
-   (create-box [w h double-line-frame]))
+   (create-box [w h single-line-frame]))
   ([w h frame-style]
   (let [box (create-grid [w h] \.)]
     (-> box
@@ -84,3 +129,7 @@
 ;(def b (create-box 32 10 double-line-frame))
 ;(println b)
 ;(pprint (box-to-str-vec b))
+
+(def tile (make-tile :floor :white \.))
+(println (tile->vec tile))
+(println (tile->vec (:wall game-tiles)))

@@ -1,4 +1,6 @@
-(ns cloak.util.grid)
+(ns cloak.util.grid
+  (:require [taoensso.timbre :as timbre
+             :refer (log  trace  debug  info  warn  error  fatal)]))
 
 (defn create-grid
   ([[w h]]
@@ -24,9 +26,11 @@
   [(grid-width grid) (grid-height grid)])
 
 (defn grid-cell
-  [grid x y]
+  ([grid loc]
+   (grid-cell grid (first loc) (second loc)))
+  ([grid x y]
   (let [c (get grid y)]
-    (get c x)))
+    (get c x))))
 
 (defn grid-row
   [grid r]
@@ -40,7 +44,7 @@
 (defn grid-center
   [grid]
   (let [[w h] (grid-dimensions grid)]
-    [(/ w 2) (/ h 2)]))
+    [(quot w 2) (quot h 2)]))
 
 (defn set-grid-cell
   [grid x y v]
@@ -74,14 +78,14 @@
 ;;
 ;; some example code
 ;;
-;(comment
-(def grid (create-grid [5 5] \.))
-(def coll [\a \b \c \d \e])
-(grid-print (set-grid-row grid 1 coll))
-(println)
-(grid-print (set-grid-column grid 1 coll))
-(println)
-(println (grid? grid))
-(println)
-(println (time (grid->str-vec grid)))
-;)
+(comment
+  (def grid (create-grid [5 5] \.))
+  (def coll [\a \b \c \d \e])
+  (grid-print (set-grid-row grid 1 coll))
+  (println)
+  (grid-print (set-grid-column grid 1 coll))
+  (println)
+  (println (grid? grid))
+  (println)
+  (println (time (grid->str-vec grid)))
+)

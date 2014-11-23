@@ -9,57 +9,89 @@
              :refer (log  trace  debug  info  warn  error  fatal)])
   (:gen-class))
 
-(timbre/set-level! :info)
+(timbre/set-level! :debug)
 
-(set! *warn-on-reflection* true)
+(set! *warn-on-reflection* false)
 
+;;
+;; These can be used to diff against the heroe's current
+;; position to get the new coords.
+;;
+(def direction {:n  [ 0 -1]
+                :s  [ 0  1]
+                :e  [ 1  0]
+                :w  [-1  0]
+                :nw [-1 -1]
+                :ne [ 1 -1]
+                :sw [-1  1]
+                :se [ 1  1]})
+
+;(defn draw-world
+;  [game screen]
+;  (let [grid (-> game :world :grid)
+;        vs (grid->str-vec grid)
+;        nrows (count grid)]
+;    (dotimes[i nrows]
+;      (s/put-string screen 0 i (get vs i)))))
+
+;(defn draw-world2
+;  [game screen]
+;  (let [grid (-> game :world :grid)]
+;    (s/put-sheet screen 0 0 grid)))
+
+;;
+;; after timing all three functions, this one turns out to be
+;; the fastest.
+;;
 (defn draw-world
   [game screen]
   (let [grid (-> game :world :grid)
-        vs (grid->str-vec grid)
         nrows (count grid)]
     (dotimes[i nrows]
-      (s/put-string screen 0 i (get vs i)))))
+      (s/put-string screen 0 i (apply str (get grid i))))))
 
 (defn get-input [game screen]
   (assoc game :input (s/get-key-blocking screen)))
 
 (defn center-of [screen]
   (let [[cols rows] (s/get-size screen)]
-    [(/ cols 2) (/ rows 2)]))
+    [(quot cols 2) (quot rows 2)]))
 
-(defn update-location [game x y]
-  (assoc-in game [:player :location] [x y]))
+(defn update-location [game loc]
+  (assoc-in game [:player :location] loc))
 
 (defn move-player
-  "todo: definitely refactor this mess."
   [game dir]
-  (let [[x y] (-> game :player :location)
-        grid  (-> game :world :grid)]
-    (case dir
-      :up    (if (can-move? grid x (dec y))
-               (update-location game x (dec y))
-               (update-location game x y))
-      :down  (if (can-move? grid x (inc y))
-               (update-location game x (inc y))
-               (update-location game x y))
-      :left  (if (can-move? grid (dec x) y)
-               (update-location game (dec x) y)
-               (update-location game x y))
-      :right (if (can-move? grid (inc x) y)
-               (update-location game (inc x) y)
-               (update-location game x y)))))
+  (let [loc    (-> game :player :location)
+        grid   (-> game :world :grid)
+        newloc (map + loc dir)]
+    (if (can-move? grid newloc)
+      (update-location game newloc)
+      game)))
 
 (defn process-input [game]
   (let [input (:input game)]
     (dissoc game :input)
     (case input
-      (\8 \k :up)     (move-player game :up)
-      (\2 \j :down)   (move-player game :down)
-      (\4 \h :left)   (move-player game :left)
-      (\6 \l :right)  (move-player game :right)
-      \q      (assoc-in game [:end-game] true)
+      (\8 \k :up)     (move-player game (:n  direction))
+      (\2 \j :down)   (move-player game (:s  direction))
+      (\4 \h :left)   (move-player game (:w  direction))
+      (\6 \l :right)  (move-player game (:e  direction))
+      (\7 \y)         (move-player game (:nw direction))
+      (\9 \u)         (move-player game (:ne direction))
+      (\1 \b)         (move-player game (:sw direction))
+      (\3 \n)         (move-player game (:se direction))
+      :escape         (assoc-in game [:end-game] true)
       game)))
+
+(defn draw-status-line [game screen]
+  (let [hp (-> game :player :hp)
+        max-hp (-> game :player :max-hp)
+        level (-> game :player :level)
+        [x y] (-> game :player :location)
+        status (str "level: " level " hp: " hp "/" max-hp " location: (" x "," y ")")
+        [_ rows] (s/get-size screen)]
+    (s/put-string screen 0 (dec rows) status)))
 
 (defn draw-player [location icon screen]
   (let [[x y] location]
@@ -80,6 +112,7 @@
         icon     (player-avatar game)]
     (trace "location:" location "icon:" icon)
     (draw-player location icon screen)
+    (draw-status-line game screen)
     (s/redraw screen))
   game)
 
@@ -104,14 +137,16 @@
   (let [screen (s/get-screen :swing {:cols 120 :rows 50})]
     (initialize-screen screen)
     (let [size (s/get-size screen)
+          dungeon (generate-dungeon (first size) (second size))
           game {:world {:size size
-                        :grid (generate-dungeon 120 50)}
+                        :grid dungeon}
                 :input nil
                 :player {:location (center-of screen)
                          :avatar \@
                          :level 1
+                         :max-hp 10
                          :hp 10}}]
       (s/in-screen screen
         (run game screen)))))
 
-(-main)
+;(-main)

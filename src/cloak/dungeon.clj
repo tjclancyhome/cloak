@@ -4,47 +4,42 @@
             [taoensso.timbre :as timbre
              :refer (log  trace  debug  info  warn  error  fatal)]))
 
-(set! *warn-on-reflection* true)
+(set! *warn-on-reflection* false)
 
 (def empty-space \.)
 
 (defn can-move?
-  [grid x y]
-  (= (grid-cell grid x y) empty-space))
+  [grid loc]
+  (= (grid-cell grid loc) empty-space))
 
 (defn update-grid-row
   [grid x y v]
-  (loop [i 0
-         n (count v)
-         grid grid]
-    (if (< i n)
-      (recur (inc i)
-             n
-             (-> grid
-                 (set-grid-cell (+ x i) y (nth v i))))
-      grid)))
-
-(defn create-room
-  "This creates a room via the gui box method."
-  [width height]
-  (let [width (+ 2 width)
-        height (+ 2 height)]
-    (create-box width height double-line-frame)))
+  (let [n (count v)]
+    (loop [i 0
+           grid grid]  ;; todo: find a better way than using the loop form
+      (if (< i n)
+        (recur (inc i) (set-grid-cell grid (+ x i) y (nth v i)))
+        grid))))
 
 (defn add-random-door
   [room]
   (let [wall (inc (rand-int 4))
         width (grid-width room)
         height (grid-height room)
-        wall-center (if (odd? wall)
-                      (/ height 2)
-                      (/ width 2))]
+        wall-center (if (odd? wall) (quot height 2) (quot width 2))]
     (debug "wall:" wall "width:" width "height:" height "wall-center:" wall-center)
     (cond
-     (= wall 1) (set-grid-cell room 0 wall-center \.)
-     (= wall 2) (set-grid-cell room wall-center 0 \.)
-     (= wall 3) (set-grid-cell room (dec width) wall-center \.)
-     (= wall 4) (set-grid-cell room wall-center (dec height) \.))))
+     (= wall 1) (set-grid-cell room 0 wall-center empty-space)
+     (= wall 2) (set-grid-cell room wall-center 0 empty-space)
+     (= wall 3) (set-grid-cell room (dec width) wall-center empty-space)
+     (= wall 4) (set-grid-cell room wall-center (dec height) empty-space))))
+
+(defn create-room
+  "This creates a room via the gui box method."
+  [width height]
+  (let [width (+ 2 width)
+        height (+ 2 height)]
+    (add-random-door (create-box width height single-line-frame))))
 
 (defn generate-dungeon
 
@@ -57,11 +52,11 @@
   [width height]
   (let [game-grid (create-grid [width height] \.)
         [game-width game-height] (grid-center game-grid)
-        room (add-random-door (create-room 32 10))
+        room (create-room 12 6)
         room-width  (grid-width room)
         room-height (grid-height room)
-        room-loc-x (- game-width  (/ room-width 2))
-        room-loc-y (- game-height (/ room-height 2))]
+        room-loc-x (- game-width  (quot room-width 2))
+        room-loc-y (- game-height (quot room-height 2))]
     (loop [i 0
            n (grid-height room)
            game-grid game-grid]
@@ -73,3 +68,4 @@
         game-grid))))
 
 
+;(println (generate-dungeon 100 49))

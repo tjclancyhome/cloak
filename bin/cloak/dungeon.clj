@@ -9,27 +9,24 @@
 (def empty-space \.)
 
 (defn can-move?
-  [grid x y]
+  [grid [x y]]
   (= (grid-cell grid x y) empty-space))
 
 (defn update-grid-row
   [grid x y v]
-  (loop [i 0
-         n (count v)
-         grid grid]
-    (if (< i n)
-      (recur (inc i)
-             n
-             (-> grid
-                 (set-grid-cell (+ x i) y (nth v i))))
-      grid)))
+  (let [n (count v)]
+    (loop [i 0
+           grid grid]  ;; todo: find a better way than using the loop form
+      (if (< i n)
+        (recur (inc i) (set-grid-cell grid (+ x i) y (nth v i)))
+        grid))))
 
 (defn create-room
   "This creates a room via the gui box method."
   [width height]
   (let [width (+ 2 width)
         height (+ 2 height)]
-    (create-box width height double-line-frame)))
+    (create-box width height block-dense-frame)))
 
 (defn add-random-door
   [room]

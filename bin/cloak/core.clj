@@ -13,6 +13,19 @@
 
 (set! *warn-on-reflection* true)
 
+;;
+;; These can be used to diff against the heroe's current
+;; position to get the next one.
+;;
+(def direction {:n  [ 0 -1]
+                :s  [ 0  1]
+                :e  [ 1  0]
+                :w  [-1  0]
+                :nw [-1 -1]
+                :ne [ 1 -1]
+                :sw [-1  1]
+                :se [ 1  1]})
+
 (defn draw-world
   [game screen]
   (let [grid (-> game :world :grid)
@@ -28,37 +41,32 @@
   (let [[cols rows] (s/get-size screen)]
     [(/ cols 2) (/ rows 2)]))
 
-(defn update-location [game x y]
-  (assoc-in game [:player :location] [x y]))
+(defn update-location [game loc]
+  (assoc-in game [:player :location] loc))
 
 (defn move-player
   "todo: definitely refactor this mess."
   [game dir]
-  (let [[x y] (-> game :player :location)
-        grid  (-> game :world :grid)]
-    (case dir
-      :up    (if (can-move? grid x (dec y))
-               (update-location game x (dec y))
-               (update-location game x y))
-      :down  (if (can-move? grid x (inc y))
-               (update-location game x (inc y))
-               (update-location game x y))
-      :left  (if (can-move? grid (dec x) y)
-               (update-location game (dec x) y)
-               (update-location game x y))
-      :right (if (can-move? grid (inc x) y)
-               (update-location game (inc x) y)
-               (update-location game x y)))))
+  (let [loc    (-> game :player :location)         
+        grid   (-> game :world :grid)
+        newloc (map + loc dir)]    
+    (if (can-move? grid newloc)
+      (update-location game newloc)
+      game)))
 
 (defn process-input [game]
   (let [input (:input game)]
     (dissoc game :input)
     (case input
-      (\8 \k :up)     (move-player game :up)
-      (\2 \j :down)   (move-player game :down)
-      (\4 \h :left)   (move-player game :left)
-      (\6 \l :right)  (move-player game :right)
-      \q      (assoc-in game [:end-game] true)
+      (\8 \k :up)     (move-player game (:n  direction))
+      (\2 \j :down)   (move-player game (:s  direction))
+      (\4 \h :left)   (move-player game (:w  direction))
+      (\6 \l :right)  (move-player game (:e  direction))
+      \7              (move-player game (:nw direction))
+      \9              (move-player game (:ne direction))
+      \1              (move-player game (:sw direction))
+      \3              (move-player game (:se direction))
+      \q              (assoc-in game [:end-game] true)
       game)))
 
 (defn draw-player [location icon screen]
@@ -101,7 +109,7 @@
 
 (defn -main
   [& args]
-  (let [screen (s/get-screen :swing {:cols 120 :rows 50})]
+  (let [screen (s/get-screen :auto {:cols 120 :rows 50})]
     (initialize-screen screen)
     (let [size (s/get-size screen)
           game {:world {:size size

@@ -74,14 +74,14 @@
 ;;
 ;; some example code
 ;;
-;(comment
-(def grid (create-grid [5 5] \.))
-(def coll [\a \b \c \d \e])
-(grid-print (set-grid-row grid 1 coll))
-(println)
-(grid-print (set-grid-column grid 1 coll))
-(println)
-(println (grid? grid))
-(println)
-(println (time (grid->str-vec grid)))
-;)
+(comment
+  (def grid (create-grid [5 5] \.))
+  (def coll [\a \b \c \d \e])
+  (grid-print (set-grid-row grid 1 coll))
+  (println)
+  (grid-print (set-grid-column grid 1 coll))
+  (println)
+  (println (grid? grid))
+  (println)
+  (println (time (grid->str-vec grid)))
+)

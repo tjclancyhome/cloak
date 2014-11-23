@@ -30,6 +30,22 @@
    :bottom-left single-line-bottom-left-corner
    :bottom-right single-line-bottom-right-corner})
 
+(def block-middle-frame
+  {:veritcal-edge block-middle
+   :horizontal-edge block-middle
+   :top-left block-middle
+   :top-right block-middle
+   :bottom-left block-middle
+   :bottom-right block-middle})
+
+(def block-dense-frame
+  {:veritcal-edge block-dense
+   :horizontal-edge block-dense
+   :top-left block-dense
+   :top-right block-dense
+   :bottom-left block-dense
+   :bottom-right block-dense})
+
 (defn box-line
   [len left middle right]
   (let [v []]
