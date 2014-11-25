@@ -12,6 +12,7 @@
 ;;
 (defrecord Dimension [width height])
 (defrecord Point [x y])
+(defrecord Coord [x y])
 
 ;;
 ;; Note: The GameTiles idea won't work with boxes that

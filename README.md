@@ -6,6 +6,10 @@ Cloak is a simple, Rogue-like game written in Clojure.
 
 Download from https://github.com/tjclancyhome/cloak
 
+To build an executable jar file:
+
+    $ lein uberjar
+
 ## Usage
 
 This runs the game.
@@ -15,10 +19,6 @@ This runs the game.
 ### Bugs
 
 Probably lots of bugs right now.
-
-### Any Other Sections
-### That You Think
-### Might be Useful
 
 ## License
 

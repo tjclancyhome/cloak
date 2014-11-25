@@ -2,7 +2,7 @@
   (:require [cloak.symbols :refer :all]
             [cloak.util.grid :refer :all]
             [cloak.gui.core :refer :all]
-            [cloak.dungeon :refer [generate-dungeon can-move?]]
+            [cloak.old-dungeon :refer [generate-dungeon can-move?]]
             [clojure.string :refer [join]]
             [lanterna.screen :as s]
             [taoensso.timbre :as timbre
@@ -134,7 +134,7 @@
 
 (defn -main
   [& args]
-  (let [screen (s/get-screen :swing {:cols 120 :rows 50})]
+  (let [screen (s/get-screen :auto {:cols 120 :rows 50})]
     (initialize-screen screen)
     (let [size (s/get-size screen)
           dungeon (generate-dungeon (first size) (second size))

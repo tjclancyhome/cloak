@@ -1,4 +1,4 @@
-(ns cloak.dungeon
+(ns cloak.old-dungeon
   (:require [cloak.util.grid :refer :all]
             [cloak.gui.core :refer :all]
             [taoensso.timbre :as timbre
@@ -58,13 +58,9 @@
         room-loc-x (- game-width  (quot room-width 2))
         room-loc-y (- game-height (quot room-height 2))]
     (loop [i 0
-           n (grid-height room)
            game-grid game-grid]
-      (if (< i n)
-        (recur (inc i)
-             n
-             (-> game-grid
-                 (update-grid-row room-loc-x (+ i room-loc-y) (grid-row room i))))
+      (if (< i room-height)
+        (recur (inc i) (update-grid-row game-grid room-loc-x (+ i room-loc-y) (grid-row room i)))
         game-grid))))
 
 
